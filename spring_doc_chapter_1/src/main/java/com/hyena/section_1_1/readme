@@ -1,0 +1,41 @@
+introduction to the spring ioc container and beans
+
+.IoC is also known as dependency inject(DI). it is process whereby objects define their
+dependencies only through constructors arguments , arguments to a factory method , or
+properties that are set on the object instance after it is constructed or returned from a factory
+method .
+
+可以通过以下方式配置bean的依赖：
+                            构造函数参数   public A(DependAnother another)
+                            工厂方法参数   public static A factoryMethod(DependAnother another)
+                            属性的set方法  public void setXXX(DependAnother another)
+
+工厂方法/构造函数生成实例 -------- > 调用属性的set方法
+
+
+the org.springframework.beans and org.springframework.context packages are the basis for spring
+framework's IoC container. the BeanFactory interface provides an advanced configuration mechanism
+capable of managing any type of object. ApplicationContext is sub-interface of BeanFactory.
+
+it adds :   Easier integration with spring AOP features(更好的和spring AOP集成)
+            Message resource handling
+            Event publication
+            Application-layer specific contexts such as the WebApplicationContext for use in web applications
+            (对于每一个应用层，都提供相应的ApplicationContext的实现，如在web应用中，提供WebApplicationContext
+            又如在注解spring配置中，提供AnnotationConfigApplicationContext)
+
+in short , the BeanFactory provides the configuration framework and basic functionality , and the
+ApplicationContext adds more enterprise-specific functionality .(BeanFactory提供配置框架和基本的功能
+ApplicationContext提供更多的企业级功能)
+
+
+
+in spring, the objects that form the backbone(骨干) of your application and that are managed by spring Ioc Container
+are called beans .（组成你应用的骨干并且由Ioc容器管理的objects，叫做beans）. A bean is an object that is instantiated,
+assembled,and otherwise managed by a spring Ioc container. otherwise, a bean is simply one of many objects in
+your application.Beans and the dependencies among them are reflected in the configuration metadata used by
+a container.
+
+bean就是 实例化，然后组装(配置依赖的过程称为组装) 然后由spring容器管理的对象。beans和他们的依赖表现在配置元数据上，这些元数据
+由容器使用（容易根据这些配置元数据来生成实例，装配bean的依赖，回调bean的生命周期（lifecycle）接口）
+

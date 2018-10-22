@@ -1,0 +1,22 @@
+Bean Overview
+
+
+A spring IoC container manages one or more beans.(spring容器管理很多bean).these bean definitions are represented
+as BeanDefiniton objects in container , which （指代BeanDefinition）contain the following metadata:
+
+.A package-qualified class name（类的全限定名称) : typically , the actual implementation class of the the bean being defined
+    //  Instantiate
+
+
+.Bean behavior configuration elements , which state how the bean should behave in the container
+(scope , lifecycle callbacks , and so forth)  // Configure
+
+
+.References to other beans that are needed for the bean to work . these references
+are also called collaborators or dependencies  // Assemble
+
+.other configuration settings to set in the newly created object -for example,
+the size limit of the pool or the number of connections to use in a bean that manages
+a connection pool   // 这个是bean的其它配置，不是spring bean配置中的关键步骤。
+
+

@@ -1,0 +1,37 @@
+Parent
+
+
+
+Documentation:
+               在这个模块我们阐述整个模块的布局。
+
+               Parent作为父模块，主要配置一些所有模块需要的库文件（Spring jars）.
+
+               工程结构说明如下：
+
+               Spring_doc_chapter_1 , Spring_doc_chapter_2 分别对应Spring Documentation
+               中的第一章节，第二章节...so forth
+
+
+      我们以Spring_doc_chapter_1说明每个章节的工程结构：
+
+              com.hyena.commons包下放 所有的类。
+
+              每一个小节需要记录的话放在 section_X_X/readme当中。
+
+              spring用到的资源文件放到resources包下，并mark as resources
+
+
+      接下来说明Test ：               // 采用junit测试
+
+
+               每个小节对应的test放到test/java下的某个类中。
+
+               每个测试方法名称必须能说明你要测试的是spring的哪个功能。
+
+               每个测试方法上面要有注释。注释开头要表明Section_X_X，说明你的这个
+               测试是来自哪个小节。并且说明你要测试的是什么（测试描述）。而且要写上
+               在测试过程中遇见的问题，并写上解决方法（要详细点）
+
+
+      idea_lab , open_spring模块功能，请阅读其里面的readme文件。

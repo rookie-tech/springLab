@@ -1,0 +1,54 @@
+Container overview
+
+the org.springframework.context.ApplicationContext interface represents the spring container
+and is responsible for instantiating , configuring ,and assembling the beans .the container gets
+instructions on what objects to instantiate , configure , assemble by reading configuration metadata.
+the configuration metadata is represented by xml , java code , java annotations .
+
+instantiate : 实例化  // 生成对象
+configure : 配置对象 // 注意这里的配置不是配置对象的依赖，我猜应该是配置对象的一些其它信息，如：scope，lifecycle-interface...etc
+assemble : 组装对象 // 配置对象间的依赖
+
+配置元数据的形式：xml,java code,java annotation
+
+
+
+in most application scenarios, explicit user code is not required to instantiate one or more instance of
+spring container . For example , in a web application scenario , a simple eight lines of boilerplate web
+descriptor XML in the web.xml file of the application typically suffices.
+
+在很多应用场景中，不需要手动实例化spring IoC 容器。例如在web应用场景中，在web.xml文件中使用简单的8行(或者更多)样版xml描述符
+就已经足够了 ------ 上面说的就是在web.xml 配置spring容器的方式，采用标签配置，而不是在用户代码用实例化spring IoC容器
+
+Configuration Metadata
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="..." class="...">
+       <!--collaborators and configurations for this bean go here-->
+    </bean>
+</beans>
+
+id : the id attribute is string that identifies the individual bean definition
+class : defines the type of the bean , use fully qualified classname
+
+注意一个细节：一个bean标签，在spring IoC中转化成一个BeanDefinition对象。这个BeanDefinition
+对象里面包含这bean的元数据。
+
+
+思考一下bean标签的解析方式：无他，我猜是先写一个xml解析工具，然后吧xml文件"安排"的明明白白的，
+就是你想要啥，就能能过工具的api得到。然后将这些数据作为参数，利用反射，做一些事情。。。。
+
+
+beans/import.resource 说明： spring.xml里面有注释，看一下
+
+除了相对路径，也可以使用绝对路径。如下：
+    file:c:/config/service.xml  , classpath:/config/service.xml
+    一个是从系统目录下查找，另一个是从classpath下查找。。。。
+
+    -----这部分涉及到spring Resource的知识点，在第二章说明
+
+
