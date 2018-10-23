@@ -2,7 +2,7 @@ Bean Overview
 
 
 A spring IoC container manages one or more beans.(spring容器管理很多bean).these bean definitions are represented
-as BeanDefiniton objects in container , which （指代BeanDefinition）contain the following metadata:
+as BeanDefinition objects in container , which （指代BeanDefinition）contain the following metadata:
 
 .A package-qualified class name（类的全限定名称) : typically , the actual implementation class of the the bean being defined
     //  Instantiate
@@ -15,8 +15,82 @@ as BeanDefiniton objects in container , which （指代BeanDefinition）contain 
 .References to other beans that are needed for the bean to work . these references
 are also called collaborators or dependencies  // Assemble
 
-.other configuration settings to set in the newly created object -for example,
+.other configuration settings to set in the newly created object .for example,
 the size limit of the pool or the number of connections to use in a bean that manages
 a connection pool   // 这个是bean的其它配置，不是spring bean配置中的关键步骤。
 
 
+BeanDefinition Properties:                   // bean属性
+                            class  // instantiate
+                            name // bean name
+                            scope // bean scope
+                            constructor arguments // injection
+                            properties // injection
+                            Autowiring mode // bean config
+                            lazy initializing mode // bean config
+                            initializing method // lifecycle callbacks
+                            destruction method // lifecycyle callbacks
+
+
+in additional to bean definitions that contain information on how to create a specific bean. the
+ApplicationContext implementation also permit the registration of existing objects that are created
+outside the container. --------> test/java/SpringContainer.registerOutsizeIoC method
+
+-----------------------------------------------------
+Naming Beans
+
+every bean has one or more identifiers . these identifiers must be unique within the container that hosts
+the bean. A bean usually has only one identifier . however , if it requires more than one , the extra ones
+can be considered as aliases.   ---只能有一个identifier ，其它的identifiers都叫做aliases（别名）
+
+you can use id attribute , the name attribute or both to specify the bean identifiers . the id attribute lets
+you specify exactly one id .
+
+if you want to introduce other aliases for the bean , you can also specify them in
+the name attribute , separated by a comma(,),semicolon(;),or white space.
+------->可以在name属性中指定多个别名。这个别名可以用逗号(,)，分号(;)，空格(_)分开。
+
+you are not required to supply a name or id for a bean. if you do not supply a name or id explicitly .
+the container generates a unique name for that bean.
+------>不一定要提供一个id/name ， 如果不提供，那么容器会为这个bean生成一个唯一的名字(unique name)
+规则就是：类名第一个字母小写。
+
+
+--------------------------------------------------------
+Aliasing a bean outsize the Bean Definition    // 在bean标签外为bean起一个别名
+
+<alias name="fromName" alias="aliasName"/>
+
+name属性可以写bean的id/name 属性值。
+
+---见------>resources/spring.xml
+
+
+--------------------------------------------------------
+Instantiate Beans   //实例化Bean
+
+if you use XML-based configuration metadata, you specify the type(or class) of object that is to instantiated
+in the class attribute of the <bean/> element.this class attribute (which internally is a Class Property on
+a BeanDefinition instance) is usually mandatory. you can use Class Property in one of two ways:
+
+.typically,to specify the bean class to be constructed in the case where the container itself directly creates
+the bean by calling its constructor reflectively, somewhat equivalent to java code with new Operator
+---------> 这中情况通常是容器通过反射调用类的构造方法。某种成都上等同于java代码中的new操作符
+---------> 这要求你要指明一个无参的构造方法(public)。
+
+.to specify the actual class containing the static factory method that is invoked to create the object, in the
+less common case where the container invokes a static factory method on a class to create the bean. the object
+type returned from the invocation of the static factory method may be the same class or entirely another class
+
+---->也可以用一个工厂类的static方法，产生bean，这个bean可能是同样的类型，也可能完全不是
+
+如果想对静态内部类定义bean definition: com.example.Something$anotherThing。字符$将内部类和外部类区分开来//这个和jvm规定
+是一样的
+
+详情：resources/spring.xml
+
+WARNING：in spring documentation , "factory bean" refers to a bean that is configured in the spring container
+and creates objects through an instance or static factory method . by contrast , FactoryBean refers to a spring-specific
+FactoryBean Class
+
+-------------------------------------------------------

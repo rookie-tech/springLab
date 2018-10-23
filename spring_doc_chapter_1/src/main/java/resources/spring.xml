@@ -9,4 +9,39 @@
     <import resource="dao.xml"/>
     <import resource="/service.xml"/>
 
+
+    <bean id="uniqueBean" class="com.hyena.commons.beans.MyBean" name="oneName;anotherName">
+    </bean>
+
+
+    <!--因为id,name都是归这个bean独有的，所以alias/name属性可以
+    使用bean的id,name-->
+    <alias name="uniqueBean" alias="yourBean"/>
+    <alias name="oneName" alias="myBean"/>
+
+
+    <!--just specify name  -->
+    <bean name="noId" class="com.hyena.commons.beans.MyBean"/>
+
+
+    <!--我们前面说过，id，name都叫做bean的identifiers,因为oneName
+      这个identifier被uniqueBean使用了，所以这里面你就不能用oneName作为aotherUniqueBean
+      的identifier-->
+    <!--<bean id="anotherUniqueBean" class="com.hyena.commons.dao.AccountDao" name="oneName">
+
+    </bean>-->
+
+
+    <!--这种方式是通过工厂方法的静态方法生成实例-->
+    <bean id="factoryCreatedBean" class="com.hyena.commons.factory.ServiceFactory"
+    factory-method="factoryCreatedBean"/>
+
+
+
+    <!--通过生成工厂对象，调用工厂的实例方法生成对象-->
+    <bean id="factory" class="com.hyena.commons.factory.ServiceFactory"/>
+    <bean id="anotherWayFactoryCreatedBean" factory-bean="factory" factory-method="noStaticCreateBean"/>
+
+
+
 </beans>
