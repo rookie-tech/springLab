@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+
+    <!--这个首先要调用无参数的构造方法，然后再调用setter-->
+    <bean id="exampleBean" class="com.hyena.commons.beans.ExampleBean">
+        <property name="beanOne" ref="anotherBean"/>
+        <property name="beanTwo" ref="yetAnotherBean"/>
+        <property name="i" value="1"/>
+    </bean>
+
+
+    <bean id="anotherBean" class="com.hyena.commons.beans.AnotherBean"/>
+    <bean id="yetAnotherBean" class="com.hyena.commons.beans.YetAnotherBean"/>
+
+
+
+    <!--instead of using constructor , spring is told to call a static factory
+    method to return an instance of the object-->
+    <!--详见：com.hyena.commons.factory.ServiceFactory.createServiceWithArg-->
+    <bean id="anotherExampleBean" class="com.hyena.commons.factory.ServiceFactory"
+          factory-method="createServiceWithArg">
+        <constructor-arg ref="anotherBean"/>
+        <constructor-arg ref="yetAnotherBean"/>
+        <constructor-arg value="1"/>
+    </bean>
+</beans>

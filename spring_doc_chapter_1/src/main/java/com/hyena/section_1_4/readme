@@ -1,0 +1,489 @@
+Dependencies:
+
+preface:
+        A typical enterprise application does not consist of a single object.even the simplest application has
+        a few objects that work together to present what the end-user sees as a coherent application
+        ----->就是不能自己一个人撸，找个人帮你撸。。这就是Dependencies
+
+
+
+-----------------------------------------------------
+Dependency Injection
+
+dependency injection(DI) is a process whereby objects define their dependencies
+only through constructor arguments , arguments to a factory method or properties
+that are set on the object instance after it is constructed or returned from a
+factory method. the container then injects those dependencies when it creates
+the bean . this process is fundamentally the inverse(hence the name , inverse of control)
+of the bean itself controlling the instantiation or location of its dependencies
+on its own by using direct construction of classes or the service locator pattern.
+
+这里我要说明一下：网上把DI就叫做IOC，我觉得不对  // 表明观点
+
+根据上面的说明，DI是对象定义他们依赖的一个过程，可以通过构造函数的参数，工厂方法，或者是setXXX方法。
+
+而IOC，是容器将这些依赖注入到对象当中。容器控制对象的初始化，并且确定他们依赖的位置。原来是我们用户来维持依赖关系
+现在由容器帮你配置这些依赖关系，由容器来帮你锁定这些依赖在哪。所以说spring容器是一个IOC容器就是这么来的。   // 论证
+
+
+所以DI可以看作是定义对象依赖的形式，IOC是配置对象依赖的过程
+所以别听网上人瞎逼逼  // 结论
+
+DI exists in two major variants : Constructor-based dependency and setter-based dependency injection
+
+-----------------------------------------------------
+Constructor-based Dependency Injection
+
+constructor-based DI is accomplished by the container invoking a constructor with a number of arguments,
+each representing a dependency. calling a static factory method with specific arguments to construct
+the bean is nearly equivalent , and this discussion treats arguments to a constructor and to a static
+factory method similarly.
+
+constructor-base DI 通过容器调用有参数的构造方法来完成，每个参数代表一个依赖。当然，也可以通过带参数的静态工厂方法来构造这个bean，
+这两个方法差不多是等价的。可以把这个参数当作构造函数的参数，也可以当作静态工厂方法的参数。
+
+详情：resources/constructor-based.xml
+
+---------------------------------------------------
+Setter-based Dependency Injection
+
+Setter-based DI is accomplished by the container calling setter methods on your beans after invoking a no-
+argument constructor or a no-argument static factory method to instantiate your bean.
+
+当调用完无参数的构造方法/无参数的静态工厂方法  -------> 调用setter方法
+
+
+the ApplicationContext supports constructor-based and setter-based DI for the beans it manages. it also
+supports setter-based DI after some dependencies have been injected through the constructor approach.
+
+-----> ApplicationContext支持constructor-based / setter-based DI
+       同时，当用constructor注入某些dependencies后，也可以用setter注入。
+
+
+----------------------------------------------------
+Dependency Resolution Process  // 下面几句话挺重要的
+
+.the ApplicationContext is created and initialized with configuration metadata that described all the beans.
+Configuration can be specified by xml, java code or annotations.
+
+.for each bean, its dependencies are expressed in the form of properties, constructor arguments, or arguments
+to the static-factory method.
+
+.each property or constructor argument is an actual definition of the value to set,or a reference to another
+bean in the container
+
+.each property or constructor argument that is value is converted from its specific format to the actual type
+of that property or constructor argument. By default,spring can convert a value supplied in spring format to
+all built-in types , such as int , long ,boolean , string , and so forth.
+
+
+the spring container validates the configuration of each bean as the container is created. however, the bean
+properties themselves are not set until the bean is actually created.beans that are singleton-scoped and set
+to be pre-instantiated(the default) are created when the container is created .otherwise ,the bean is created
+only when it is requested.
+
+容器创建的时候会验证每个bean的配置（这就是为什么启动容器时会报配置文件异常），bean的属性是当bean真正创建的时候才被设置的。
+默认情况下，当容器创建好，bean是提前创建好的，并且默认是单例模式的。否则只有当需要这个bean的时候才创建。
+
+这里我要引出一个问题*****：在默认情况下，有一个bean是单例的，并且在容器创建好之后就要实例化。但是它有一个属性，这个属性是每次需要的时候，
+                  会提供一个新的对象(created when requested)。
+
+                  这个时候会遇见什么问题呢？首先你想实例化bean，但是这个bean的依赖是变化(created when requested)的，刚开始
+                  的时候没有相应的属性给这个bean。所以问题来了，一方面你需要实例化这个bean，一方面这个bean的属性还没有。
+                  -_-!!实例化是肯定要实例化的，这辈子都要实例化的。。怎么解决呢？？
+
+                  我想你也知道了------ 代理。你这个bean不想实例化吗？(注意东北口音，是反问句)，好那我满足你，给你个代理
+                  让它当作属性，满足你的实例化。然后每次需要属性的时候，把逻辑交给代理，让代理去获取真正的属性。。。
+
+                  ----我觉得这样才是真正的理解了代理。   // 用于匹配两个有依赖关系的bean的scope不同的情况。如A(singleton) , B(prototype)
+                                                        A-----depend----> B
+
+
+creation of a bean potentially causes a graph of beans to be created , as the beans' dependencies and its
+dependencies' dependencies are created and assigned.
+
+-----------------------------------------------------------
+Examples of Dependency Injection
+
+详见：resources/setter-based.xml
+
+
+
+------------------------------------------------------------
+Dependencies and Configuration in detail
+
+Straight values(Primitives , Strings , and so on )
+
+the value attribute of the <property/> elements specifies a property or constructor
+argument as a human-readable string representation.Spring' conversion service is used
+to convert these values from a String to the actual type of the property or argument.
+
+example:
+    <bean id="dataSource" class="com.example.DataSouceImpl">
+        <property name="password" value="123"/>
+        <property name="account" value="hyena"/>
+    </bean>
+
+    当然可以使用p空间。
+    <bean id="" class=""
+    p:password="123"
+    p:account="hyena"/>
+
+
+you can also configure a java.util.Properties instance,as follows:
+
+<bean id="mappings" class="...">
+    <property name="properties">
+        <value>
+           key1=value1
+           key2=value2
+        </value>
+    </property>
+</bean>
+
+
+the spring container converts the text inside the <value/> element into a java.util.Properties
+instance by using JavaBeans PropertyEditor mechanism.this is a nice shortcut, and is one of a
+few places where the spring team do favor the use of the nested <value/> element
+over the value element.
+
+
+the idref element
+
+the idref element is simply an error-proof way to pass the id(a string value , not a reference)
+of another bean in the container to a <constructor-arg/> or <property/> element.
+
+
+example:
+
+<bean id="theTargetBean" class=""/>
+
+<bean id="anotherBean" class="">
+    <property name="theTargetName">
+        <idref bean="theTargetBean"/>
+    </property>
+</bean>
+
+
+another way:
+
+<bean id="theTargetBean" class=""/>
+
+<bean id="anotherBean" class="">
+    <property name="theTargetName" value="theTargetBean">
+</bean>
+
+这里有一个问题：为什么value被解析成了bean的id
+answer：还记得前面的spring' conversion service --- convert the string value to the actual type of the
+property or constructor argument.
+
+
+
+Inner Beans
+
+A <bean/> element inside the <property/> or <constructor-arg/> elements defines an inner bean.
+
+example:
+
+<bean id="outBean" class="...">
+    <property name="target">
+        <bean class="...">
+            <property name="name" value="hyena"/>
+            <property name="age" value="25"/>
+        </bean>
+    </property>
+</bean>
+
+an inner bean definition dose not require a defined ID or name. if specified,the container does not use
+such a value as an identifier. the container also ignores the scope flag on creation, because inner beans
+are always anonymous and are always created with the outer bean. it's not possible to access inner beans
+independently or to inject them into collaborating beans other than into the enclosing bean.
+
+---- enclosing :对内闭合的--我这么翻译。内指的就是内部类/bean  --------------------
+                                                        |   _____________   |outer / enclosing bean
+                                                        |   |           |   |
+                                                        |   |   inner   |   |
+                                                        |   |___________|   |
+                                                        |___________________|
+
+As a corner case,it is possible to receive destruction callbacks from a custom scope. inner beans typically
+simply share their containing bean's scope
+
+
+------------------------------------------------------
+Collections
+
+the <list/>, <set/>,<map/> ,<props/> elements set the properties and arguments of java collection types
+List , Set , Map , Properties.
+
+Collection Merging
+#实例我就不写了，自己看doc
+
+Limitations of Collection Merging
+
+必须是同一个类型，merge属性必须在子元素声明。
+
+-------------------------------------------------------
+Strongly-typed collection
+
+example:
+        public class SomeClass{
+            private Map<String,Float> account;
+
+
+            public void setAccount(Map<String,Float> account){
+                    this.account = account ;
+                    }
+
+        }
+
+        <bean id="something" class="....SomeClass">
+            <property name="account">
+                <map>
+                    <entry key="one" value="9.99"/>
+                    <entry key="two" value="2.75"/>
+                </map>
+            </property>
+        </bean>
+
+    when the account property of the something bean is prepared for injection . the generics information
+    about element type of strongly-typed Map<String,Float> is available by reflection.Thus,Spring' type
+    conversion infrastructure recognizes the various value elements as being type of Float, and the String
+    values(9.99,2.75) are converted into an actual Float type.
+
+
+--------------------------------------------------------------
+Null and Empty String values
+
+<bean class="...">
+    <property name="email" value=""/>
+</bean>   // empty string value
+
+
+<bean class="...">
+    <property name="email">
+        <null/>
+    </property>
+</bean> // null
+
+--------------------------------------------------------------
+Using depends-on
+
+
+if a bean is a dependency of another bean,that usually means that one bean is set as a property of another .
+.typically you accomplish this with the <ref/> element.however,sometimes dependencies between beans are less
+direct. An example is when a static initializer ina class needs to be triggered , such as for database driver
+registration.the depends-on attribute can explicitly force one or more beans to be initialized before the bean
+using this element is initialized.
+
+------->有些依赖不是直接的。如：static代码块中的，注册数据库驱动器的时候就是。这时候可以使用depends-on，它可以强迫一个/更多
+beans先初始化。
+
+example:
+        <bean id="beanOne" class="...ExampleBean" depends-on="manager,accountDao">
+            <property name="manager" ref="manager"/>
+        </bean>
+
+        <bean id="manager" class="...ManagerBean"/>
+        <bean id="accountDao" class="...JdbcAccountDao"/>
+
+        manager,accountDao优先初始化。
+
+
+note: the depends-on attribute in the bean definition can specify both an initialization-time dependency and ,
+in the case of singleton beans only , a corresponding destroy-time dependency. Dependent beans that define a
+depends-on relationship with given bean are destroyed first, prior to the given bean itself being destroyed.
+thus,depends-on can also control shutdown order.
+
+        being-depends-on-bean <<< initiate <<< depends-on-bean
+        being-depends-on-bean >>> destroy  >>> depends-on-bean
+
+        注意：都得是singleton bean
+
+
+--------------------------------------------------------------
+Lazy-initialized Beans
+
+by default,ApplicationContext implementations eagerly create and configure all singleton beans as part of
+the initialization process.Generally , this pre-instantiation is desirable,because errors in the configuration
+or surrounding environment are discovered immediately,as opposed to hours or even days later.when this behavior
+is not desirable,you can prevent pre-instantiation of a singleton bean by marking the bean definition as being
+lazy-initialized. A lazy-initialized bean tells the IoC container to create a bean instance when it is first
+requested, rather than at startup.
+
+example:
+        <bean id="lazy" class="..." lazy-init="true"/>
+        <bean id="not-lazy" class="..."/>
+
+
+一句话：ApplicationContext很渴，需要在启动的时候实例化bean。
+
+
+however when a lazy-initialization bean is a dependency of a singleton bean that is not lazy-initialized
+the ApplicationContext creates the lazy-initialized bean at startup , because it must satisfy the singleton's
+dependencies. the lazy-initialized bean is injected into a singleton bean elsewhere that is not lazy-initialized
+
+当not-lazy依赖lazy-bean，这个lazy-bean在容器启动的时候被创建。
+
+--------------------------------------------------------------
+Autowiring Collaborators
+
+the spring container can autowire relationships between collaborating beans.you can let spring resolve
+collaborators(other beans) automatically for your bean by inspecting the contents of the ApplicationContext.
+
+Autowiring has the following advantages:
+
+.Autowiring can significantly reduce the need to specify properties or constructor arguments.
+
+.Autowiring can update a configuration as your objects evolve(进化；使逐步形成).For example,if you need to add
+a dependency to a class, that dependency can be satisfied automatically without you needing to modify the
+configuration.thus autowiring can be especially useful during development,without negating the option of
+switching to explicit wiring when the code base becomes more stable.
+
+// 好处：减少配置
+
+
+Autowiring mode                                             Explanation
+
+no                                      (Default)No autowiring.Bean references must be defined by ref elements.
+                                        Changing the default setting is not recommended for larger deployments,
+                                        because specifying collaborators explicitly gives greater control and
+                                        clarity.To some extend, it documents the structure of a system.
+                                        //最好用No，因为这样后，使用ref，依赖明显，清楚。
+
+byName                                  Autowiring by property name. Spring looks for a bean with the same name
+                                        as the property that needs to be autowired.For example,if a bean definition
+                                        set to autowire by name and it contains a master property(that is , it has
+                                        a setMaster(...) method), spring looks for a bean definition named master,and
+                                        uses it to set the property.
+
+byType                                  lets a property be autowired if exactly one bean of the property type exits
+                                        in the container. if more than one exits, a fatal exception is thrown,which
+                                        indicates that you may not use byType autowiring for that bean.if there are
+                                        no matching beans, nothing happens(the property is not set)
+                                        //使用byType的时候，在容器中只能有一个满足的类型bean，如果有两个相同的类型bean满足，则
+                                        //抛异常。当然也可以没有匹配的类型，这时候属性值就不会被设置
+
+constructor                             Analogous to byType but applies to constructor arguments. if there is not
+                                        exactly one bean of the constructor argument type in the container, a fatal
+                                        error is raised.
+                                        //和byType类似，只不过是用在构造函数参数上面的。
+
+
+AutowireCapableBeanFactory.AUTOWIRE_NO=0
+AutowireCapableBeanFactory.AUTOWIRE_BY_NAME=1
+AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE=2
+AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR=3
+
+AutowireCapableBeanFactory使得容器具备Autowire功能，这种接口设计体现了设计模式中的接口分离原则。每个接口只做一个功能。
+
+
+
+with byType or constructor autowiring mode,you can wire arrays and typed collections.in such cases,all aotowire
+candidates within the container that match the expected type are provided to satisfy the dependency.
+// 当wire 矩阵/集合的时候，容器里面所有满足符合类型的candidates bean都会被提供来满足这个依赖。
+
+
+--------------------------------------------------------------
+Excluding a Bean from Autowiring
+
+
+on a per-bean basis, you can exclude a bean from autowiring . in spring' XML format, set the autowire-candidate
+attribute of the <bean/> element to false. the container makes that specific bean definition unavailable to the
+autowiring infrastructure.
+// 把<bean/>里面的autowire-candidate属性为false，这个bean就不会被autowiring系统当作一个dependency注入到其它bean中。
+// 当然这个bean还是可以使用autowire功能的。
+
+
+the autowire-candidate attribute is designed to only affect type-base autowiring. it does not affect explicit
+references by name, which get resolved even if the specified bean is not marked as an autowire candidate. As
+consequence, autowiring by name nevertheless injects a bean if the name matches.
+//autowire-candidate属性只针对type-based autowiring,也就是byType，constructor
+
+
+you can also limit autowire candidates based on pattern-matching against bean names.the top level <beans/> element
+accept one or more patterns within its default-autowire-candidates attribute.For example, to limit autowire
+candidate status to any bean whose name ends with Repository, provide a value of *Repository. To provide multiple
+patterns, define them in a comma-separated list. An explicit value of true or false for a bean definition's
+autowire-candidate attribute always takes precedence. For such beans , the pattern matching rules do not apply.
+//在beans标签的default-bean-candidate属性中可以指定正则表达式，让某写bean exclude from autowiring.
+//bean标签中的autowire-candidate属性会override default-bean-candidate 属性。
+
+
+these techniques are useful for beans that you never want to be injected into other beans by autowiring.it
+does not mean that an excluded bean cannot itself be configured by using autowiring.Rather ,the bean ifself
+is not a candidate for autowiring other beans .
+//这个技术很重要，当你希望某个bean不被注入到其它bean当中，通过autowring。当然这个bean本身还是可以使用autowiring的。
+
+
+--------------------------------------------------------------
+Method Injection
+
+问题提出：
+       in most application scenarios,most beans in the container are singletons. when a singleton bean needs
+       to collaborate with another singleton bean or a non-singleton bean needs to collaborate with another
+       non-singleton bean,you typically handle the dependency by defining one bean as a property of the other.
+       A problem arises when the bean lifecycles are different. suppose singleton bean A needs to use non-singleton
+       (prototype)bean B,perhaps on each method invocation on A . the container creates the singleton A only once,
+       and thus only gets one opportunity to set the properties . the container cannot provide bean A with a new instance
+       of bean B every time one is needed.
+       //当singleton bean A依赖prototype bean B的时候，每次对A的调用返回的都是这个singleton A，但是里面的B却不是由prototype B
+       //产生的新B，而是原来第一次实例化A的时候设置的B
+
+解决：
+      1。bean实现ApplicationContextAware接口，或得一个ApplicationContext的引用，然后通过ApplicationContext获得新对象
+      // 这个方法弊端就在于，你的代码和spring的代码耦合(coupled)在一起了（spring代码强势插入）
+      // 通过ApplicationContextAware接口，我们也知道了XXXAware接口的作用，就是获得XXX的引用。
+
+      2。lookup method injection
+      lookup method injection is the ability of the container to override methods on container-managed beans and
+      return the lookup result for another named bean in the container.the lookup typically involves a prototype
+      bean.(lookup通常都是与prototype bean有关).The Spring Framework implements this method injection by using bytecode
+      generation form CGLIB(short from Class Generate Library) library to dynamically generate a subclass that
+      overrides the method.
+      //lookup方法注入是容器重写bean（容器管理的）方法，然后返回另一个名字的bean（也是由容器管理的）.Spring框架实现方法注入是通过
+      //CGLIB库动态生成子类来重写这个方法。
+
+      Warning：
+            1.for this dynamic subclassing to work , the class that the spring bean container subclasses cannot be
+            final , and the method to be overridden cannot be final ,either.
+            // 由spring容器管理的类，不能是final，方法不能是final。因为CGLIB需要继承并重写
+
+            2.Unit-testing a class that has an abstract method requires you to subclass the class yourself and to
+            supply a stub implementation of the abstract method.
+            //单元测试一个抽象类的时候，需要你自己创建一个子类。
+
+            3.A further key limitation is that lookup methods do not work with factory methods and in particular
+            not with @Bean methods in configuration classes , since in that case, the container is not in charge
+            of creating the instance and therefore cannot create a runtime-generated subclass on the fly.
+            //lookup方法不能和工厂方法一起用，也不能和Configuration类中的@Bean方法一起用，因为在上面的请看下，容器不能掌控实例的
+            //创建过程，因此也就不能在运行时创建一个子类。
+            //说白了就是@Lookup不能放在工厂方法，或者是Configuration类里面由@Bean标注的方法。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
