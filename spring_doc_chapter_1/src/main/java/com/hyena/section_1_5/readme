@@ -1,0 +1,214 @@
+Bean Scopes
+
+
+you can control not only the various dependencies and configuration values that are to be plugged into an object
+that is created from a particular bean definition but also control the scope of the objects created from a particular
+bean definition. this approach is powerful and flexible , because you can choose the scope of the objects you create
+through configuration instead of having to bake in the scope of an object at the class level.
+
+
+Scope                       Description
+
+singleton                   (Default)Scopes a single bean definition to a single object instance for
+                            each spring's container
+                            // 对于每个spring容器来说，每个BeanDefinition都只会有一个对象实例
+                            // 当然，如果有多个spring容器，那么同一个BeanDefinition在每个容器中都只有一个对象实例。
+                            // 这个和java中的单例模式是不一样的。java中是在整个应用中只有一个这个类的实例。
+
+prototype                   Scopes a single bean definition to any number of object instances
+
+
+--------web application----------
+
+request                     Scopes a single bean definition to the lifecycle of a single HTTP request.that is ,
+                            each HTTP request has its own instance of a bean created off the back of a single
+                            bean definition. only valid in the context of a web-aware Spring ApplicationContext
+
+session                     Scope a single bean definition to the lifecycle of an HTTP session .only valid in
+                            the context of a web-aware Spring ApplicationContext.
+
+application                 Scopes a single bean definition to the lifecycle of a ServletContext. only valid in
+                            the context of a web-aware Spring ApplicationContext.
+
+websocket                   Scopes a single bean definition to the lifecycle of websocket. only valid in the
+                            context of a web-aware Spring ApplicationContext
+
+WARNING: you should use the prototype scope for all stateful beans and the singleton scope for stateless beans.
+//有状态的用prototype,无状态的用singleton
+
+
+Request,Session,Application,and WebSocket scopes
+
+to support the scoping of beans at the request,session,application,and websocket levels(web-scoped beans),some
+minor initial configuration is required before you define your beans.(this initial setup is not required for the
+standard scopes : singleton,prototype)
+//在使用request，session，application，websocket作用域时，需要做一下小小的初始化配置.
+
+how you accomplish this initial setup depends on your particular Servlet environment.
+//怎么完成这个初始化配置取决于你的Servlet环境
+
+if you access scoped beans within Spring Web MVC,in effect,within a request that is processed by the Spring
+DispatcherServlet , no special setup is necessary.DispatcherServlet already exposes all relevant state.
+//如果通过spring Web MVC访问beans，request是由DispatcherServlet处理的，不需要任何特殊的配置。DispatcherServlet已经暴露
+//了所有相关的状态
+
+if you use a Servlet 2.5 web container, with requests processed outside of Spring's DispatcherServlet(for example
+,when using JSF or Struts), you need to register the org.springframework.web.context.request.RequestContextListener
+.For Servlet 3.0+,this can be done programmatically by using WebApplicationInitializer interface. Alternatively,
+or for older containers,add the following declaration to your web application's web.xml file:
+
+       <web-app>
+            <listener>
+                <listener-class>
+                        org.springframework.web.context.request.RequestContextListener
+                </listener-class>
+            </listener>
+       </web-app>
+//如果request是在DispatcherServlet外面处理的。需要注册上面的类
+
+Alternatively,if there are issues with your listener setup,consider using spring's RequestContextFilter.the filter
+mapping depends on the surrounding web application configuration, so you have to change it as appropriate.the following
+listing shows the filter part of a web application :
+
+        <web-app>
+                <filter>
+                    <filter-name>requestContextFilter</filter-name>
+                    <filter-class>org.springframework.web.filter.RequestContextFilter</filter-class>
+                 </filter>
+
+                 <filter-mapping>
+                        <filter-name>requestContextFilter</filter-name>
+                        <url-pattern>/*</url-pattern>
+                 </filter-mapping>
+         </web-app>
+
+DispatcherServlet,RequestContextFilter,RequestContextListener all do exactly the same thing, namely bind the HTTP
+request object to the Thread that is servicing that request.this makes beans that are request- and session- scoped
+available further down the call chain.
+// DispatcherServlet,RequestContextFilter,RequestContextListener它们都只是做同样的事情，把HTTP Request对象和处理这个
+// request的线程绑定。
+
+
+注解形式：
+        @RequestScope
+        @Component
+        public class LoginAction{
+        ...
+        }
+        // 用户登录
+
+        @SessionScope
+        @Component
+        public class UserPreferences{
+        ...
+        }
+        // 用户设置
+
+        @ApplicationScope
+        @Component
+        public class AppPreferences{
+        ...
+        }
+        // app设置
+
+
+
+------------------------------------------------
+Scoped Beans as Dependencies
+
+the Spring container manages not only instantiation of your Objects(beans), but also the wiring up of collaborators
+(or dependencies).if you want inject (for example)an HTTP request Scoped bean into another of a longer-lived scope,
+you may choose to inject an AOP proxy in place of the scoped bean . that is , you need to inject a proxy object that
+exposes the same public interface as the scoped object but can also retrieve the real object from the relevant
+scope(such an HTTP request) and delegate method calls onto the real object.
+
+//当你把request对象注入进Session对象的时候，注入的是一个AOP代理。
+//原因：之前我们提到过，Spring容器实例化Session对象的时候，如果注入的是request对象，那么Session里面的request对象就不发生变化了，以后都是
+//你注入进入的那个request对象。这和实际业务是相悖的，Session需要根据不同的request对象来做处理。所以注入到Session对象里面的是reuqest的
+//一个AOP proxy，Session请求request的某个接口的时候，实际上调用的AOP proxy的接口，AOP proxy把这个方法调用委托给真正的request对象。
+// 如下图：
+
+                Session
+                ------------
+                |          |    injected into                   delegate method calls
+                |          |<----------------- (AOP proxy) ----------------------------> actual object
+                |          |
+                ------------
+
+example:
+
+        <!--an HTTP Session-scoped bean exposes as a proxy-->
+        <bean id="userPreferences" class="...UserPrefences">
+                <aop:scoped-proxy/>
+        </bean>
+
+        <!--a singleton scoped bean injected with a proxy to the above bean-->
+        <bean id="userService" class="...SimpleUserService">
+            <property name="userPreferences" ref="userPreferences"/>
+        </bean>
+
+        注意：这里面为什么要把Session-scoped bean变成代理呢，首先我们看userService使用UserPreferences。UserPreferences
+        是一个可变类。假如不使用Proxy，那么注入进UserService里面也是一个UserPreferences的singleton，这个对象以后不会变了。
+
+-----------------------------------------------
+Choosing the type of proxy to create //选择怎么样的代理类型，JDK，CGLIB
+
+By default,when the Spring container creates a proxy for bean that is marked up with the <aop:scoped-proxy/>
+element,a CGLIB-based class proxy is created.
+
+WARNING: CGLIB proxies intercept only public method calls! Do not call non-public methods on such a proxy. they
+are not delegated to the actual scoped target obejct.
+//CGLIB只是拦截公有方法。
+
+
+<aop:scoped-proxy proxy-target-class="false"/>  // 则使用JDK proxy，这要求被代理的类至少实现一个接口。
+
+WARNING: when you place <aop:scoped-proxy/> in a FactoryBean implementation, it it the factory bean ifself that
+is scoped , not the object returned from getObject() .
+//把<aop:scoped-proxy/>放在FactoryBean的实现类里面，是这个实现类被代理了，而不是这个FactoryBean产生的对象
+-----------------------------------------------
+Custom Scopes  //自定义scopes
+
+步骤：
+      1。实现org.springframework.beans.factory.config.Scope接口
+      2。注册Scope：使用ConfigurableBeanFactory的registerScope(String scopeName,Scope scope)注册scope
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

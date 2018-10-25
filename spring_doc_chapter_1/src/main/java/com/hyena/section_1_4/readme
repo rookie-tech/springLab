@@ -456,7 +456,7 @@ Method Injection
             3.A further key limitation is that lookup methods do not work with factory methods and in particular
             not with @Bean methods in configuration classes , since in that case, the container is not in charge
             of creating the instance and therefore cannot create a runtime-generated subclass on the fly.
-            //lookup方法不能和工厂方法一起用，也不能和Configuration类中的@Bean方法一起用，因为在上面的请看下，容器不能掌控实例的
+            //lookup方法不能和工厂方法一起用，也不能和Configuration类中的@Bean方法一起用，因为容器不能掌控实例的
             //创建过程，因此也就不能在运行时创建一个子类。
             //说白了就是@Lookup不能放在工厂方法，或者是Configuration类里面由@Bean标注的方法。
 
